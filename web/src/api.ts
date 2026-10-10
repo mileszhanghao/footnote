@@ -33,7 +33,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body as T
 }
 
-export const api = {
+export interface Api {
+  health(): Promise<Health>
+  documents(): Promise<DocumentInfo[]>
+  upload(file: File): Promise<DocumentInfo>
+  ask(documentId: string, question: string): Promise<AgentAnswer>
+}
+
+/** GitHub Pages build: no server, the RAG pipeline runs in the browser. */
+export const IS_DEMO = import.meta.env.VITE_DEMO === 'true'
+
+const httpApi: Api = {
   health: () => request<Health>('/health'),
   documents: () => request<DocumentInfo[]>('/documents'),
   upload: (file: File) => {
@@ -48,3 +58,14 @@ export const api = {
       body: JSON.stringify({ documentId, question }),
     }),
 }
+
+// The demo module (PDF parser included) is only bundled into the demo build.
+const demo = () => import('./demo/demoApi').then((m) => m.demoApi)
+const demoApi: Api = {
+  health: async () => (await demo()).health(),
+  documents: async () => (await demo()).documents(),
+  upload: async (file) => (await demo()).upload(file),
+  ask: async (id, q) => (await demo()).ask(id, q),
+}
+
+export const api: Api = IS_DEMO ? demoApi : httpApi

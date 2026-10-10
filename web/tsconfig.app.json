@@ -5,6 +5,8 @@
     "lib": ["ES2023", "DOM"],
     "module": "esnext",
     "types": ["vite/client"],
+    /* The demo imports server/src modules; resolve their packages from web/node_modules. */
+    "paths": { "unpdf": ["./node_modules/unpdf"] },
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
 

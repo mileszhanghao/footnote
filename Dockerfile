@@ -5,6 +5,8 @@ WORKDIR /web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web/ ./
+# The in-browser demo imports server/src modules, so the type check needs them.
+COPY server/src /server/src
 RUN npm run build
 
 FROM node:22-alpine AS server

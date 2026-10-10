@@ -4,9 +4,10 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { z } from 'zod'
 import { runAgent, type AgentDeps } from './agent/agent.js'
-import { DocumentError } from './rag/documents.js'
+import { DocumentError, type DocumentService } from './rag/documents.js'
 
 export interface AppOptions extends AgentDeps {
+  documents: DocumentService
   maxUploadBytes: number
   webDistDir?: string
   /** Shown on /api/health so the UI can tell the user which mode it is in. */

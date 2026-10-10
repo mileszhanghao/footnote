@@ -19,7 +19,7 @@ export class McpToolSource {
   constructor(private readonly makeTransport: () => Transport) {}
 
   async connect(): Promise<void> {
-    const client = new Client({ name: 'agentai', version: '1.0.0' })
+    const client = new Client({ name: 'footnote', version: '1.0.0' })
     await client.connect(this.makeTransport())
     const { tools } = await client.listTools()
     this.tools = tools.map((t) => ({

@@ -1,12 +1,14 @@
-# AgentAI
+# Footnote¹
 
-Upload a PDF and ask questions about it. An LLM agent decides which tools it needs — searching the document, searching the web through an MCP server, or both — and answers with page citations and source links.
+Upload a PDF and ask questions about it. An LLM agent decides which tools it needs: searching the document, searching the web through an MCP server, or both. Every answer comes with footnotes, meaning page citations and source links.
+
+**Live demo:** https://mileszhanghao.github.io/footnote/ runs the retrieval pipeline entirely in your browser, so your PDF never leaves your computer. That pipeline is PDF parsing, chunking, hashing embeddings, vector search and the agent loop, using the same TypeScript modules as the server. With no language model in the browser, demo answers are the best-matching sentences with their page numbers. A sample PDF is preloaded: a fictional handbook for [SiuYeh](https://github.com/mileszhanghao/siuyeh), my late-night food-ordering app. Try "How much does delivery cost?" or upload your own PDF.
 
 **Stack:** TypeScript · Node 22 · Express 5 · OpenAI API (tool calling + embeddings) · Model Context Protocol (official TypeScript SDK) · React 19 · Vite · Ant Design · TanStack Query · Vitest · Supertest · Docker · GitHub Actions
 
 ## Background
 
-I first built this in LaiOffer's Agent AI course (2025): an Express server using LangChain for PDF question answering, a separate MCP server wrapping SerpAPI web search, and a React UI with voice input. In 2026 I rebuilt it to fix the problems I found when re-reading the original code. The rebuild was developed with AI pair-programming assistance (Claude).
+I first built this in LaiOffer's Agent AI course (2025), where it was called AgentAI: an Express server using LangChain for PDF question answering, a separate MCP server wrapping SerpAPI web search, and a React UI with voice input. In 2026 I rebuilt it to fix the problems I found when re-reading the original code. The rebuild was developed with AI pair-programming assistance (Claude).
 
 ## What changed from the course version, and why
 
@@ -20,7 +22,7 @@ I first built this in LaiOffer's Agent AI course (2025): an Express server using
 | Uploads were saved to disk under the user's own filename, with no type or size limit. | Uploads stay in memory, must be PDFs, are size-limited (413 when too large), and names are sanitized for display only. |
 | 500-character chunks with no overlap cut sentences in half. | ~900-character chunks with 150 characters of overlap, broken at paragraph or sentence boundaries, never spanning two pages. |
 | The questions went in the URL query string (`GET /chat?question=…`). | `POST /api/chat` with a validated JSON body. |
-| Nothing ran without OpenAI and SerpAPI keys, and there were no tests. | An **offline mode** (local hashing embeddings + extractive answers) runs with no keys. 19 tests cover chunking, retrieval, the agent loop, the MCP server and the HTTP API. |
+| Nothing ran without OpenAI and SerpAPI keys, and there were no tests. | An **offline mode** (local hashing embeddings + extractive answers) runs with no keys. Tests cover chunking, retrieval, answer extraction, the agent loop, the MCP server, the HTTP API and the in-browser demo. |
 | Voice used two third-party packages. | The browser's built-in Web Speech API for speech input and spoken answers. |
 
 ## Architecture
@@ -38,6 +40,7 @@ React UI ──/api──► Express server ──► DocumentService ──► 
 - `server/src/agent/agent.ts` — the tool-calling loop and citation collection.
 - `server/src/mcp/` — the web-search MCP server (also runnable on its own by any MCP client) and the MCP client that turns its tools into agent tools.
 - `server/src/llm/` — `ChatModel` / `Embedder` interfaces with OpenAI and offline implementations.
+- `web/src/demo/` — the GitHub Pages demo. It imports the server's RAG and agent modules directly, so the demo and the server cannot drift apart. Those modules use only portable code (Web Crypto, a pure-JS hash, no Node built-ins) for this reason.
 
 ## Running it
 
@@ -50,8 +53,8 @@ cd web && npm install && npm run dev          # UI on :5173, proxies /api to :50
 With Docker (API and UI in one container):
 
 ```bash
-docker build -t agentai .
-docker run -p 5001:5001 -e OPENAI_API_KEY=... -e SERPAPI_KEY=... agentai
+docker build -t footnote .
+docker run -p 5001:5001 -e OPENAI_API_KEY=... -e SERPAPI_KEY=... footnote
 # open http://localhost:5001
 ```
 
