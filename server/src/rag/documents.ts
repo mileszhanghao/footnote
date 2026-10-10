@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto'
 import { extractText } from 'unpdf'
 import type { Embedder } from '../llm/types.js'
 import { chunkPages } from './chunker.js'
@@ -21,11 +20,15 @@ export class DocumentError extends Error {}
  */
 export class DocumentService {
   private readonly docs = new Map<string, DocumentInfo>()
+  private readonly embedder: Embedder
+  private readonly store: InMemoryVectorStore
 
-  constructor(
-    private readonly embedder: Embedder,
-    private readonly store = new InMemoryVectorStore(),
-  ) {}
+  // Plain fields instead of constructor parameter properties, so the browser
+  // demo can compile this file with TypeScript's erasable-syntax-only mode.
+  constructor(embedder: Embedder, store = new InMemoryVectorStore()) {
+    this.embedder = embedder
+    this.store = store
+  }
 
   async ingestPdf(name: string, bytes: Uint8Array): Promise<DocumentInfo> {
     let pages: string[]
@@ -41,7 +44,7 @@ export class DocumentService {
     const vectors = await this.embedder.embed(chunks.map((c) => c.text))
 
     const info: DocumentInfo = {
-      id: randomUUID(),
+      id: globalThis.crypto.randomUUID(),
       name: sanitizeName(name),
       pages: pages.length,
       chunks: chunks.length,

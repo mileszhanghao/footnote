@@ -1,7 +1,17 @@
 import type { ChatModel, Message, ToolSpec } from '../llm/types.js'
-import type { McpToolSource } from '../mcp/mcpTools.js'
-import type { DocumentService } from '../rag/documents.js'
-import type { WebResult } from '../mcp/webSearchServer.js'
+import type { ScoredChunk } from '../rag/vectorStore.js'
+
+/** What the agent needs from the document index (DocumentService implements it). */
+export interface DocumentSearch {
+  search(documentId: string, query: string, k?: number): Promise<ScoredChunk[]>
+}
+
+/** Extra tools the agent may call (McpToolSource implements it). */
+export interface ToolSource {
+  list(): ToolSpec[]
+  has(name: string): boolean
+  call(name: string, args: Record<string, unknown>): Promise<{ text: string; isError: boolean }>
+}
 
 export interface DocumentCitation {
   type: 'document'
@@ -50,9 +60,9 @@ const SYSTEM_PROMPT = `You answer questions about the user's uploaded PDF.
 
 export interface AgentDeps {
   model: ChatModel
-  documents: DocumentService
+  documents: DocumentSearch
   /** Optional MCP tools (e.g. web search). The agent works without them. */
-  mcpTools?: McpToolSource
+  mcpTools?: ToolSource
   maxSteps?: number
 }
 
@@ -116,7 +126,7 @@ export async function runAgent(deps: AgentDeps, documentId: string, question: st
 
 function webCitations(text: string): WebCitation[] {
   try {
-    return (JSON.parse(text) as WebResult[]).map((r) => ({ type: 'web', title: r.title, url: r.link }))
+    return (JSON.parse(text) as { title: string; link: string }[]).map((r) => ({ type: 'web', title: r.title, url: r.link }))
   } catch {
     return []
   }

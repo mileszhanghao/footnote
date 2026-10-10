@@ -61,3 +61,23 @@ describe('App', () => {
     expect(JSON.parse(String(chatCall?.[1]?.body))).toEqual({ documentId: 'd1', question: 'What is an MVP?' })
   })
 })
+
+describe('App with the sample document', () => {
+  it('offers suggested questions and asks one when clicked', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+      const url = String(input)
+      const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200 })
+      if (url === '/api/health') return json({ status: 'ok', model: 'gpt-5-mini', embedder: 'openai', webSearch: true })
+      if (url === '/api/documents') return json([{ ...DOC, name: 'night-owl-handbook.pdf' }])
+      if (url === '/api/chat' && init?.method === 'POST')
+        return json({ answer: 'Delivery costs $3.99 (p. 2).', citations: [], steps: [], model: 'gpt-5-mini' })
+      return new Response(null, { status: 404 })
+    })
+    renderApp()
+
+    fireEvent.click(await screen.findByText('How much does delivery cost?'))
+    expect(await screen.findByText('Delivery costs $3.99 (p. 2).')).toBeInTheDocument()
+    const chat = fetchSpy.mock.calls.find(([url]) => url === '/api/chat')
+    expect(JSON.parse(String(chat![1]!.body))).toEqual({ documentId: 'd1', question: 'How much does delivery cost?' })
+  })
+})

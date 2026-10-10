@@ -51,4 +51,4 @@ const app = createApp({
   capabilities: { model: model.name, embedder: embedder.name, webSearch: Boolean(mcpTools) },
 })
 
-app.listen(config.port, () => console.log(`AgentAI server on http://localhost:${config.port}`))
+app.listen(config.port, () => console.log(`Footnote server on http://localhost:${config.port}`))

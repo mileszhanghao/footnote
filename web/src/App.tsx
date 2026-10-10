@@ -1,12 +1,21 @@
 import { AudioOutlined, InboxOutlined, SoundOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, App as AntApp, Button, Card, Empty, Input, Layout, Select, Space, Switch, Tooltip, Typography, Upload } from 'antd'
+import { Alert, App as AntApp, Button, Card, Empty, Flex, Input, Layout, Select, Space, Switch, Tag, Tooltip, Typography, Upload } from 'antd'
 import { useState } from 'react'
-import { api, type AgentAnswer } from './api'
+import { IS_DEMO, api, type AgentAnswer } from './api'
 import Answer from './components/Answer'
 import { useVoice } from './useVoice'
 
 const { Header, Content } = Layout
+
+const REPO_URL = 'https://github.com/mileszhanghao/footnote'
+const SAMPLE_QUESTIONS = [
+  'When does Golden Lantern close?',
+  'How much does delivery cost?',
+  'Which dishes contain shellfish?',
+  'What happens on rainy nights?',
+  'How do Night Owl points work?',
+]
 
 interface Turn {
   question: string
@@ -56,17 +65,43 @@ export default function App() {
 
   const voice = useVoice(submit)
   const offline = health.data?.model.startsWith('local:')
+  const activeDoc = documents.data?.find((d) => d.id === activeId)
+  const isSample = activeDoc?.name === 'night-owl-handbook.pdf'
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{ display: 'flex', alignItems: 'center' }}>
-        <Typography.Title level={3} style={{ color: '#fff', margin: 0 }}>
-          AgentAI
+      <Header className="app-header">
+        <Typography.Title level={3} className="brand">
+          Footnote<sup>1</sup>
         </Typography.Title>
+        <span className="tagline">Ask a PDF. Every answer comes with page footnotes.</span>
       </Header>
       <Content style={{ padding: '24px 16px', maxWidth: 900, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
         <Space orientation="vertical" size="large" style={{ width: '100%' }}>
-          {offline && (
+          {IS_DEMO && (
+            <Alert
+              type="info"
+              showIcon
+              title="Demo mode: everything runs in your browser"
+              description={
+                <>
+                  This page runs Footnote&apos;s retrieval pipeline (PDF parsing, chunking, hashing embeddings, vector
+                  search and the agent loop) locally, so your PDF never leaves your computer. With no language model
+                  here, answers are the best-matching sentences with their page numbers. The full app adds OpenAI tool
+                  calling and an MCP web-search server; see the{' '}
+                  <a href={REPO_URL} target="_blank" rel="noreferrer">
+                    source on GitHub
+                  </a>
+                  . A sample document, a fictional handbook for the{' '}
+                  <a href="https://mileszhanghao.github.io/siuyeh/" target="_blank" rel="noreferrer">
+                    SiuYeh
+                  </a>{' '}
+                  late-night food app, is preloaded.
+                </>
+              }
+            />
+          )}
+          {offline && !IS_DEMO && (
             <Alert
               type="info"
               showIcon
@@ -100,7 +135,7 @@ export default function App() {
           />
 
           <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
-            {turns.length === 0 && <Empty description="Ask a question about the selected document" />}
+            {turns.length === 0 && <Empty description={activeDoc ? `Ask a question about ${activeDoc.name}` : 'Upload a PDF to get started'} />}
             {turns.map((turn, i) => (
               <Card key={i} size="small" title={turn.question} loading={!turn.result && !turn.error}>
                 {turn.error && <Typography.Text type="danger">{turn.error}</Typography.Text>}
@@ -108,6 +143,17 @@ export default function App() {
               </Card>
             ))}
           </Space>
+
+          {isSample && (
+            <Flex wrap gap={6} align="center">
+              <Typography.Text type="secondary">Try:</Typography.Text>
+              {SAMPLE_QUESTIONS.map((q) => (
+                <Tag.CheckableTag key={q} checked={false} onChange={() => submit(q)} className="suggestion">
+                  {q}
+                </Tag.CheckableTag>
+              ))}
+            </Flex>
+          )}
 
           <Space.Compact style={{ width: '100%' }}>
             <Input.Search

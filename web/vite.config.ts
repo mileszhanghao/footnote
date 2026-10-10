@@ -4,6 +4,8 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [react()],
+  // src/demo imports server/src modules; resolve their dependencies from web/node_modules.
+  resolve: { dedupe: ['unpdf'] },
   server: {
     proxy: { '/api': 'http://localhost:5001' },
   },
