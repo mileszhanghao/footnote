@@ -8,7 +8,9 @@ Upload a PDF and ask questions about it. An LLM agent decides which tools it nee
 
 ## Background
 
-I first built this in LaiOffer's Agent AI course (2025), where it was called AgentAI: an Express server using LangChain for PDF question answering, a separate MCP server wrapping SerpAPI web search, and a React UI with voice input. In 2026 I rebuilt it to fix the problems I found when re-reading the original code. The rebuild was developed with AI pair-programming assistance (Claude).
+It also replaces an earlier, simpler version of the same idea: **Next AI** (LaiOffer, December 2024). Next AI was a LangChain + Express server that answered questions about one uploaded PDF, with a React UI and a voice chat mode. Everything it did is covered here.
+
+I first built the current version in LaiOffer's Agent AI course (2025), where it was called AgentAI: an Express server using LangChain for PDF question answering, a separate MCP server wrapping SerpAPI web search, and a React UI with voice input. In 2026 I rebuilt it to fix the problems I found when re-reading the original code. The rebuild was developed with AI pair-programming assistance (Claude).
 
 ## What changed from the course version, and why
 
